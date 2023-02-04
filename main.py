@@ -416,6 +416,6 @@ async def userstats(interaction: Interaction, user: Optional[discord.User]):
 # endregion
 
 # endregion
-
+print("hi")
 
 client.run(token=resources.TOKEN)
