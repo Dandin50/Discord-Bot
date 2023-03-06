@@ -27,7 +27,6 @@ class Bot(discord.Client):
     async def setup_hook(self) -> None:
         await self.tree.sync()
 
-
 client = Bot(intents=resources.intentsOutput)
 embed = discord.Embed
 
@@ -309,7 +308,6 @@ async def memberstats(interaction: Interaction, year: Optional[int], month: Opti
                       day: Optional[int], accuracy: Optional[int], style: Optional[resources.styles]):
     interaction = process_command(interaction)
     await interaction.response.send_message("Loading...")
-
     start = interaction.guild.created_at
     end = datetime.datetime.now()
     if isinstance(year, int):
@@ -412,6 +410,30 @@ async def userstats(interaction: Interaction, user: Optional[discord.User]):
                     f"**Permissions**: {''.join(permissions)}"
     ).set_author(name=user.name, icon_url=user.avatar.url))
 
+
+@client.tree.command(description="Get the timestamp of a certain date")
+@app_commands.describe(year="Leave empty for current year", month="Leave empty for current month", day="Leave empty for current day", hour="Leave empty for current hour", minute="Leave empty for current minute", second="Leave empty for current second", microsecond="Leave empty for current microsecond")
+async def timestamp(interaction: Interaction, year: Optional[int], month: Optional[resources.monthsList], day: Optional[int], hour: Optional[int], minute: Optional[int], second: Optional[int], microsecond: Optional[int]):
+    now = datetime.datetime.now()
+    if year is None: year = now.year
+    if month is None: month = now.month
+    else: month = resources.months[month]
+    if day is None: day = now.day
+    if hour is None: hour = now.hour
+    if minute is None: minute = now.minute
+    if second is None: second = now.second
+    if microsecond is None: microsecond = now.microsecond
+    # if not 0 < day < calendar.monthrange(year, month)[1] + 1:
+    #     await interaction.edit_original_response(content=f"Day {day} is invalid for {month}/{year}")
+    #     return 0
+    # if not 0 <= hour < 24
+    try:
+        time = datetime.datetime(year, month, day, hour, minute, second, microsecond)
+    except Exception as e:
+        await interaction.response.send_message(e)
+        return 0
+    await interaction.response.send_message(content=f"{time.timestamp()}\n{int(time.timestamp())}")
+    return 0
 
 # endregion
 
