@@ -4,6 +4,7 @@ import datetime
 import inspect
 import json
 import os
+import time
 from typing import Union, Literal, Optional
 
 import discord
@@ -26,6 +27,7 @@ class Bot(discord.Client):
 
     async def setup_hook(self) -> None:
         await self.tree.sync()
+
 
 client = Bot(intents=resources.intentsOutput)
 embed = discord.Embed
@@ -78,10 +80,10 @@ async def on_member_join(member: discord.Member):
                                                                  f" Welcome to {member.guild.name},"
                                                                  f" owned by {member.guild.owner.name}",
                                                      color=resources.color))
-    for i in member.guild.channels:
-        if type(i) == discord.TextChannel:
-            if member.guild.created_at.timestamp() - i.created_at.timestamp() < 5:
-                await i.send(content=f"Welcome {member.mention}")
+    # for i in member.guild.channels:
+    #     if type(i) == discord.TextChannel:
+    #         if member.guild.created_at.timestamp() - i.created_at.timestamp() < 5:
+    #             await i.send(content=f"Welcome {member.mention}")
 
 
 # endregion
@@ -411,13 +413,21 @@ async def userstats(interaction: Interaction, user: Optional[discord.User]):
     ).set_author(name=user.name, icon_url=user.avatar.url))
 
 
+# endregion
 @client.tree.command(description="Get the timestamp of a certain date")
-@app_commands.describe(year="Leave empty for current year", month="Leave empty for current month", day="Leave empty for current day", hour="Leave empty for current hour", minute="Leave empty for current minute", second="Leave empty for current second", microsecond="Leave empty for current microsecond")
-async def timestamp(interaction: Interaction, year: Optional[int], month: Optional[resources.monthsList], day: Optional[int], hour: Optional[int], minute: Optional[int], second: Optional[int], microsecond: Optional[int]):
+@app_commands.describe(year="Leave empty for current year", month="Leave empty for current month",
+                       day="Leave empty for current day", hour="Leave empty for current hour",
+                       minute="Leave empty for current minute", second="Leave empty for current second",
+                       microsecond="Leave empty for current microsecond")
+async def timestamp(interaction: Interaction, year: Optional[int], month: Optional[resources.monthsList],
+                    day: Optional[int], hour: Optional[int], minute: Optional[int], second: Optional[int],
+                    microsecond: Optional[int]):
     now = datetime.datetime.now()
     if year is None: year = now.year
-    if month is None: month = now.month
-    else: month = resources.months[month]
+    if month is None:
+        month = now.month
+    else:
+        month = resources.months[month]
     if day is None: day = now.day
     if hour is None: hour = now.hour
     if minute is None: minute = now.minute
@@ -435,9 +445,36 @@ async def timestamp(interaction: Interaction, year: Optional[int], month: Option
     await interaction.response.send_message(content=f"{time.timestamp()}\n{int(time.timestamp())}")
     return 0
 
-# endregion
+
+@client.tree.command()
+async def setup_k1n9kn19ht(interaction: Interaction):
+    if interaction.guild.id != 1140694739142852750:
+        return
+    a = 0
+    await interaction.response.send_message("starting")
+    role = interaction.guild.get_role(1140696889675743233)
+    for channel in interaction.guild.channels:
+        if channel.permissions_for(
+                interaction.guild.default_role).read_messages and channel.category_id != 1140695746715320421:
+            print(channel.name, type(channel), channel.permissions_for)
+            await interaction.edit_original_response(content=channel.mention)
+            await channel.set_permissions(role, read_messages=True)
+            await channel.set_permissions(interaction.guild.default_role, read_messages=False)
+            a += 1
+    await interaction.edit_original_response(content=f"finished with {a} channel")
+
 
 # endregion
+@client.tree.command()
+async def delete_bot_msgs(interaction: Interaction):
+    for channel in interaction.guild.channels:
+        if type(channel) in [TextChannel, VoiceChannel]:
+            msg = await discord.utils.get(channel.history(limit=100))
+            if msg is not None:
+                if msg.author == client.user:
+                    await msg.delete()
+
+
 print("hi")
 
 client.run(token=resources.TOKEN)
